@@ -4,7 +4,7 @@ pipeline {
     environment {
         BUILD_DIR = "build"
         GIT_REPO_URL = "https://github.com/narupallenandu/jenkins-hello-world.git"
-
+        GIT_BRANCH = "main"
         IMAGE_NAME = "hello-world-app"
         CONTAINER_NAME = "hello-world-container"
     }
@@ -12,7 +12,6 @@ pipeline {
     parameters {
         string(
             name: 'GIT_BRANCH',
-            defaultValue: 'main',
             description: 'Git Branch Name'
         )
     }
@@ -49,7 +48,7 @@ pipeline {
             steps {
                 dir("${BUILD_DIR}") {
                     sh """
-                        docker build -t ${IMAGE_NAME}:v2 .
+                        docker build -t ${IMAGE_NAME}:v3test .
                     """
                 }
             }
@@ -75,8 +74,8 @@ pipeline {
                 sh """
                     docker run -d \
                     --name ${CONTAINER_NAME} \
-                    -p 9000:80 \
-                    ${IMAGE_NAME}:v2
+                    -p 9009:80 \
+                    ${IMAGE_NAME}:v3test
                 """
             }
         }
