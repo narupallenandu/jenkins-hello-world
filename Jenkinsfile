@@ -49,7 +49,7 @@ pipeline {
             steps {
                 dir("${BUILD_DIR}") {
                     sh """
-                        docker build -t ${IMAGE_NAME}:v2 .
+                        docker build -t ${IMAGE_NAME}:v2test .
                     """
                 }
             }
@@ -75,8 +75,8 @@ pipeline {
                 sh """
                     docker run -d \
                     --name ${CONTAINER_NAME} \
-                    -p 9000:80 \
-                    ${IMAGE_NAME}:v2
+                    -p 9001:80 \
+                    ${IMAGE_NAME}:v2test
                 """
             }
         }
