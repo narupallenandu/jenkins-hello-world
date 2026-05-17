@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         BUILD_DIR = "build"
-        GIT_REPO_URL = "https://github.com/sriramch163/jenkins-hello-world.git"
+        GIT_REPO_URL = "https://github.com/narupallenandu/jenkins-hello-world.git"
 
         IMAGE_NAME = "hello-world-app"
         CONTAINER_NAME = "hello-world-container"
