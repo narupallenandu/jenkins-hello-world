@@ -98,15 +98,11 @@ pipeline {
         // Stage 7: Syft Scan (SBOM Generation)
         // -----------------------------------------------------------------------
         stage('Syft Scan') {
-            steps {
-                sh """
-                    syft ${IMAGE_NAME}:${IMAGE_TAG} -o table
-
-                    syft ${IMAGE_NAME}:${IMAGE_TAG} \
-                    -o json > syft-report.json
-                """
-            }
-        }
+    steps {
+        sh 'syft jen-world:v1 -o table'
+        sh 'syft jen-world:v1 -o json > syft-report.json'
+    }
+}
 
         // -----------------------------------------------------------------------
         // Stage 8: Grype Vulnerability Scan
