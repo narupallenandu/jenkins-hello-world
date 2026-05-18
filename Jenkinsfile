@@ -5,8 +5,10 @@ pipeline {
         BUILD_DIR = "build"
         GIT_REPO_URL = "https://github.com/narupallenandu/jenkins-hello-world.git"
 
-        IMAGE_NAME = "hello-world-app"
-        CONTAINER_NAME = "hello-world-container"
+        IMAGE_NAME = "hello-jenkins"
+        IMAGE_TAG = "v1"
+
+        CONTAINER_NAME = "demo-hello-world-container"
     }
 
     parameters {
@@ -49,7 +51,7 @@ pipeline {
             steps {
                 dir("${BUILD_DIR}") {
                     sh """
-                        docker build -t ${IMAGE_NAME}:v2 .
+                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
                     """
                 }
             }
@@ -75,8 +77,8 @@ pipeline {
                 sh """
                     docker run -d \
                     --name ${CONTAINER_NAME} \
-                    -p 9000:80 \
-                    ${IMAGE_NAME}:v2
+                    -p 9006:80 \
+                    ${IMAGE_NAME}:${IMAGE_TAG}
                 """
             }
         }
@@ -91,9 +93,63 @@ pipeline {
                 """
             }
         }
+
+        // -----------------------------------------------------------------------
+        // Stage 7: Syft Scan (SBOM Generation)
+        // -----------------------------------------------------------------------
+        stage('Syft Scan') {
+            steps {
+                sh """
+                    syft ${IMAGE_NAME}:${IMAGE_TAG} -o table
+
+                    syft ${IMAGE_NAME}:${IMAGE_TAG} \
+                    -o json > syft-report.json
+                """
+            }
+        }
+
+        // -----------------------------------------------------------------------
+        // Stage 8: Grype Vulnerability Scan
+        // -----------------------------------------------------------------------
+        stage('Grype Scan') {
+            steps {
+                sh """
+                    grype ${IMAGE_NAME}:${IMAGE_TAG}
+                """
+            }
+        }
+
+        // -----------------------------------------------------------------------
+        // Stage 9: Push Image To DockerHub
+        // -----------------------------------------------------------------------
+        stage('Push Image To DockerHub') {
+
+            steps {
+
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'nandu-id',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+                        docker tag ${IMAGE_NAME}:${IMAGE_TAG} \
+                        $DOCKER_USER/${IMAGE_NAME}:${IMAGE_TAG}
+
+                        docker push \
+                        $DOCKER_USER/${IMAGE_NAME}:${IMAGE_TAG}
+                    '''
+                }
+            }
+        }
     }
 
     post {
+
         success {
             echo 'Application deployed successfully 🚀'
         }
