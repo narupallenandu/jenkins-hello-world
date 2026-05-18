@@ -5,7 +5,7 @@ pipeline {
         BUILD_DIR = "build"
         GIT_REPO_URL = "https://github.com/narupallenandu/jenkins-hello-world.git"
 
-        IMAGE_NAME = "hello-jenkins"
+        IMAGE_NAME = "jen-world"
         IMAGE_TAG = "v1"
 
         CONTAINER_NAME = "demo-hello-world-container"
@@ -128,7 +128,7 @@ pipeline {
 
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'nandu-id',
+                        credentialsId: 'jen-id',
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )
