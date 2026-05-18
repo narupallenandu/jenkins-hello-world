@@ -128,7 +128,7 @@ pipeline {
 
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'jen-',
+                        credentialsId: 'jen-id',
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )
