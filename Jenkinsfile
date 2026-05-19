@@ -152,7 +152,7 @@ pipeline {
 
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'nandu-id',
+                        credentialsId: 'nandu-world',
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )
@@ -182,6 +182,11 @@ pipeline {
         failure {
 
             echo 'Pipeline failed ❌'
+        }
+
+        always {
+
+            sh 'docker logout || true'
         }
     }
 }
