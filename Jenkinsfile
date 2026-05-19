@@ -4,32 +4,28 @@ pipeline {
 
     environment {
 
-        // ----------------------------------------------------------------
+        // ------------------------------------------------------------
         // Application Details
-        // ----------------------------------------------------------------
-        APP_NAME            = "nandu-world"
-        IMAGE_NAME          = "nandu-world"
-        IMAGE_TAG           = "v1"
+        // ------------------------------------------------------------
+        IMAGE_NAME = "nandu-world"
+        IMAGE_TAG  = "v1"
 
-        // ----------------------------------------------------------------
+        // ------------------------------------------------------------
         // DockerHub Details
-        // ----------------------------------------------------------------
+        // ------------------------------------------------------------
         DOCKER_HUB_USERNAME = "narupallenandu"
 
-        // ----------------------------------------------------------------
+        // ------------------------------------------------------------
         // Container Details
-        // ----------------------------------------------------------------
-        CONTAINER_NAME      = "demo-hello-world-container"
+        // ------------------------------------------------------------
+        CONTAINER_NAME = "demo-hello-world-container"
 
-        // ----------------------------------------------------------------
-        // Git Details
-        // ----------------------------------------------------------------
-        GIT_REPO_URL        = "https://github.com/narupallenandu/jenkins-hello-world.git"
+        // ------------------------------------------------------------
+        // Git Repository
+        // ------------------------------------------------------------
+        GIT_REPO_URL = "https://github.com/narupallenandu/jenkins-hello-world.git"
 
-        // ----------------------------------------------------------------
-        // Workspace
-        // ----------------------------------------------------------------
-        BUILD_DIR           = "build"
+        BUILD_DIR = "build"
     }
 
     parameters {
@@ -37,7 +33,7 @@ pipeline {
         string(
             name: 'GIT_BRANCH',
             defaultValue: 'main',
-            description: 'Enter Git Branch Name'
+            description: 'Enter Git Branch'
         )
     }
 
@@ -50,14 +46,14 @@ pipeline {
 
     stages {
 
-        // ================================================================
+        // ============================================================
         // Stage 1 : Prepare Workspace
-        // ================================================================
+        // ============================================================
         stage('Prepare Workspace') {
 
             steps {
 
-                echo "Creating build directory..."
+                echo "Preparing workspace..."
 
                 sh """
                     rm -rf ${BUILD_DIR}
@@ -67,14 +63,14 @@ pipeline {
             }
         }
 
-        // ================================================================
-        // Stage 2 : Clone Repository
-        // ================================================================
+        // ============================================================
+        // Stage 2 : Checkout Source Code
+        // ============================================================
         stage('Checkout Code') {
 
             steps {
 
-                echo "Cloning GitHub repository..."
+                echo "Cloning Git repository..."
 
                 dir("${BUILD_DIR}") {
 
@@ -86,9 +82,9 @@ pipeline {
             }
         }
 
-        // ================================================================
+        // ============================================================
         // Stage 3 : Build Docker Image
-        // ================================================================
+        // ============================================================
         stage('Build Docker Image') {
 
             steps {
@@ -105,14 +101,14 @@ pipeline {
             }
         }
 
-        // ================================================================
-        // Stage 4 : Stop Existing Container
-        // ================================================================
-        stage('Stop Existing Container') {
+        // ============================================================
+        // Stage 4 : Stop Old Container
+        // ============================================================
+        stage('Stop Old Container') {
 
             steps {
 
-                echo "Stopping old container if running..."
+                echo "Stopping old container..."
 
                 sh """
                     docker stop ${CONTAINER_NAME} || true
@@ -122,14 +118,14 @@ pipeline {
             }
         }
 
-        // ================================================================
+        // ============================================================
         // Stage 5 : Deploy Container
-        // ================================================================
-        stage('Deploy Application') {
+        // ============================================================
+        stage('Deploy Container') {
 
             steps {
 
-                echo "Deploying Docker container..."
+                echo "Deploying application container..."
 
                 sh """
                     docker run -d \
@@ -140,29 +136,27 @@ pipeline {
             }
         }
 
-        // ================================================================
+        // ============================================================
         // Stage 6 : Verify Deployment
-        // ================================================================
+        // ============================================================
         stage('Verify Deployment') {
 
             steps {
 
-                echo "Checking running containers..."
+                echo "Verifying deployment..."
 
-                sh """
-                    docker ps
-                """
+                sh "docker ps"
             }
         }
 
-        // ================================================================
-        // Stage 7 : Generate SBOM using Syft
-        // ================================================================
+        // ============================================================
+        // Stage 7 : Syft Scan
+        // ============================================================
         stage('Syft Scan') {
 
             steps {
 
-                echo "Generating SBOM report..."
+                echo "Generating SBOM using Syft..."
 
                 sh """
                     syft ${IMAGE_NAME}:${IMAGE_TAG} -o table
@@ -173,14 +167,14 @@ pipeline {
             }
         }
 
-        // ================================================================
-        // Stage 8 : Vulnerability Scan using Grype
-        // ================================================================
+        // ============================================================
+        // Stage 8 : Grype Scan
+        // ============================================================
         stage('Grype Scan') {
 
             steps {
 
-                echo "Running vulnerability scan..."
+                echo "Running vulnerability scan using Grype..."
 
                 sh """
                     grype ${IMAGE_NAME}:${IMAGE_TAG}
@@ -188,9 +182,9 @@ pipeline {
             }
         }
 
-        // ================================================================
-        // Stage 9 : Push Image to DockerHub
-        // ================================================================
+        // ============================================================
+        // Stage 9 : Push Image To DockerHub
+        // ============================================================
         stage('Push Image To DockerHub') {
 
             steps {
@@ -205,17 +199,17 @@ pipeline {
                     )
                 ]) {
 
-                    sh """
-                        echo \$DOCKER_PASS | \
-                        docker login -u \$DOCKER_USER --password-stdin
+                    sh '''
+                        echo "$DOCKER_PASS" | \
+                        docker login -u "$DOCKER_USER" --password-stdin
 
                         docker tag \
-                        ${IMAGE_NAME}:${IMAGE_TAG} \
-                        ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
+                        nandu-world:v1 \
+                        narupallenandu/nandu-world:v1
 
                         docker push \
-                        ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
-                    """
+                        narupallenandu/nandu-world:v1
+                    '''
                 }
             }
         }
@@ -223,28 +217,19 @@ pipeline {
 
     post {
 
-        // ================================================================
-        // SUCCESS
-        // ================================================================
         success {
 
-            echo 'Application deployed successfully 🚀'
+            echo 'Pipeline executed successfully 🚀'
         }
 
-        // ================================================================
-        // FAILURE
-        // ================================================================
         failure {
 
-            echo 'Pipeline failed ❌'
+            echo 'Pipeline execution failed ❌'
         }
 
-        // ================================================================
-        // ALWAYS
-        // ================================================================
         always {
 
-            echo 'Cleaning up Docker login session...'
+            echo 'Logging out from DockerHub...'
 
             sh 'docker logout || true'
         }
