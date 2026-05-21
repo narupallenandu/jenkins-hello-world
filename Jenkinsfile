@@ -4,25 +4,25 @@ pipeline {
 
     environment {
 
-        // ------------------------------------------------------------
+        // ============================================================
         // Application Details
-        // ------------------------------------------------------------
+        // ============================================================
         IMAGE_NAME = "nandu-world"
         IMAGE_TAG  = "v1"
 
-        // ------------------------------------------------------------
+        // ============================================================
         // DockerHub Details
-        // ------------------------------------------------------------
+        // ============================================================
         DOCKER_HUB_USERNAME = "narupallenandu"
 
-        // ------------------------------------------------------------
+        // ============================================================
         // Container Details
-        // ------------------------------------------------------------
+        // ============================================================
         CONTAINER_NAME = "demo-hello-world-container"
 
-        // ------------------------------------------------------------
+        // ============================================================
         // Git Repository
-        // ------------------------------------------------------------
+        // ============================================================
         GIT_REPO_URL = "https://github.com/narupallenandu/jenkins-hello-world.git"
 
         BUILD_DIR = "build"
@@ -64,7 +64,7 @@ pipeline {
         }
 
         // ============================================================
-        // Stage 2 : Checkout Source Code
+        // Stage 2 : Checkout Code
         // ============================================================
         stage('Checkout Code') {
 
@@ -178,12 +178,42 @@ pipeline {
 
                 sh """
                     grype ${IMAGE_NAME}:${IMAGE_TAG}
+
+                    grype ${IMAGE_NAME}:${IMAGE_TAG} \
+                    -o json > grype-report.json
                 """
             }
         }
 
         // ============================================================
-        // Stage 9 : Push Image To DockerHub
+        // Stage 9 : Archive Reports
+        // ============================================================
+        stage('Archive Reports') {
+
+            steps {
+
+                echo "Archiving security reports..."
+
+                archiveArtifacts artifacts: '*.json', fingerprint: true
+            }
+        }
+
+        // ============================================================
+        // Stage 10 : Approval Stage
+        // ============================================================
+        stage('Approval') {
+
+            steps {
+
+                input(
+                    message: 'Approve DockerHub Push?',
+                    ok: 'Approve'
+                )
+            }
+        }
+
+        // ============================================================
+        // Stage 11 : Push Image To DockerHub
         // ============================================================
         stage('Push Image To DockerHub') {
 
@@ -204,11 +234,11 @@ pipeline {
                         docker login -u "$DOCKER_USER" --password-stdin
 
                         docker tag \
-                        nandu-world:v1 \
-                        narupallenandu/nandu-world:v1
+                        ${IMAGE_NAME}:${IMAGE_TAG} \
+                        ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
 
                         docker push \
-                        narupallenandu/nandu-world:v1
+                        ${DOCKER_HUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}
                     '''
                 }
             }
