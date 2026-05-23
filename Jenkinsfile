@@ -5,7 +5,7 @@ pipeline {
     environment {
 
         // ============================================================
-        // Application Details
+        // Application Details#
         // ============================================================
         IMAGE_NAME = "nandu-world"
         IMAGE_TAG  = "v1"
